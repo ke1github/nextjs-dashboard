@@ -1,26 +1,37 @@
-// import postgres from 'postgres';
+import postgres from "postgres";
 
-// const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+// Ensure POSTGRES_URL is defined
+if (!process.env.POSTGRES_URL) {
+  throw new Error("POSTGRES_URL environment variable is not defined");
+}
 
-// async function listInvoices() {
-// 	const data = await sql`
-//     SELECT invoices.amount, customers.name
-//     FROM invoices
-//     JOIN customers ON invoices.customer_id = customers.id
-//     WHERE invoices.amount = 666;
-//   `;
+const sql = postgres(process.env.POSTGRES_URL!, { ssl: "require" });
 
-// 	return data;
-// }
+async function listInvoices() {
+  try {
+    const data = await sql`
+      SELECT invoices.amount, customers.name
+      FROM invoices
+      JOIN customers ON invoices.customer_id = customers.id
+      WHERE invoices.amount = 666;
+    `;
+    return data;
+  } catch (error) {
+    console.error("Error fetching invoices:", error);
+    throw error;
+  }
+}
 
 export async function GET() {
-  return Response.json({
-    message:
-      'Uncomment this file and remove this line. You can delete this file when you are finished.',
-  });
-  // try {
-  // 	return Response.json(await listInvoices());
-  // } catch (error) {
-  // 	return Response.json({ error }, { status: 500 });
-  // }
+  try {
+    const invoices = await listInvoices();
+    return new Response(JSON.stringify(invoices), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }
